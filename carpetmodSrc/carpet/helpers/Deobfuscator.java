@@ -4,9 +4,10 @@ import java.io.*;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.BooleanSupplier;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
@@ -14,18 +15,18 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Earthcomputer
  * <p>
- * Example: StackTraceDeobfuscator.create()
+ * Example: Deobfuscator.create()
  * .withMinecraftVersion("1.12")
  * .withSnapshotMcpNames("20180713-1.12")
  * .withCurrentStackTrace()
  * .printDeobf();
  */
-public class StackTraceDeobfuscator {
+public class Deobfuscator {
 
     private String srgUrl;
     private String namesUrl;
     private StackTraceElement[] stackTrace;
-    private ClassLoader classLoader = StackTraceDeobfuscator.class.getClassLoader();
+    private ClassLoader classLoader = Deobfuscator.class.getClassLoader();
 
     private Map<String, String> classMappings, methodMappings, methodDescCache, methodNames;
 
@@ -40,71 +41,68 @@ public class StackTraceDeobfuscator {
     private static final String JOINED_FILE_NAME = CARPET_DIRECTORY + "/joined.srg";
     private static final String METHODS_FILE_NAME = CARPET_DIRECTORY + "/methods.csv";
 
-    private StackTraceDeobfuscator() {
+    private Deobfuscator() {
     }
 
     // BUILDER
 
-    public static StackTraceDeobfuscator create() {
-        return new StackTraceDeobfuscator();
+    public static Deobfuscator create() {
+        return new Deobfuscator();
     }
 
-    public StackTraceDeobfuscator withSrgUrl(String srgUrl) {
+    public Deobfuscator withSrgUrl(String srgUrl) {
         this.srgUrl = srgUrl;
         return this;
     }
 
-    public StackTraceDeobfuscator withMinecraftVersion(String minecraftVersion) {
+    public Deobfuscator withMinecraftVersion(String minecraftVersion) {
         return withSrgUrl(String.format("http://mcpbot.bspk.rs/mcp/%1$s/mcp-%1$s-srg.zip", minecraftVersion));
     }
 
-    public StackTraceDeobfuscator withNamesUrl(String namesUrl) {
+    public Deobfuscator withNamesUrl(String namesUrl) {
         this.namesUrl = namesUrl;
         return this;
     }
 
     // e.g. 39-1.12
-    public StackTraceDeobfuscator withStableMcpNames(String mcpVersion) {
+    public Deobfuscator withStableMcpNames(String mcpVersion) {
         return withNamesUrl(String.format("http://files.minecraftforge.net/maven/de/oceanlabs/mcp/mcp_stable/%1$s/mcp_stable-%1$s.zip", mcpVersion));
     }
 
     // e.g. 20180204-1.12
-    public StackTraceDeobfuscator withSnapshotMcpNames(String mcpVersion) {
+    public Deobfuscator withSnapshotMcpNames(String mcpVersion) {
         return withNamesUrl(String.format("http://files.minecraftforge.net/maven/de/oceanlabs/mcp/mcp_snapshot/%1$s/mcp_snapshot-%1$s.zip", mcpVersion));
     }
 
-    public StackTraceDeobfuscator withStackTrace(StackTraceElement[] stackTrace) {
-        this.stackTrace = stackTrace;
+    public Deobfuscator withClassLoader(ClassLoader classLoader) {
+        this.classLoader = classLoader;
         return this;
     }
 
-    public StackTraceDeobfuscator withCurrentStackTrace() {
-        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
-        final String thisClass = getClass().getName();
-        boolean foundThisClass = false;
-        int firstIndex;
-        for (firstIndex = 0; firstIndex < stackTrace.length; firstIndex++) {
-            if (stackTrace[firstIndex].getClassName().equals(thisClass))
-                foundThisClass = true;
-            else if (foundThisClass)
-                break;
-        }
-        return withStackTrace(Arrays.copyOfRange(stackTrace, firstIndex, stackTrace.length));
-    }
-
-    public StackTraceDeobfuscator withClassLoader(ClassLoader classLoader) {
-        this.classLoader = classLoader;
+    public Deobfuscator loadAsync() {
+        loadMappings();
         return this;
     }
 
     // IMPLEMENTATION
 
-    private void ensureSrgLoaded() {
+    public boolean hasSrgNames() {
+        if (srgUrl == null) return false;
+        synchronized (SRG_SYNC_LOCK) {
+            return srgUrlsLoaded.contains(srgUrl);
+        }
+    }
+
+    public boolean hasClassNames() {
+        if (namesUrl == null) return false;
+        synchronized (NAMES_SYNC_LOCK) {
+            return namesUrlsLoaded.contains(namesUrl);
+        }
+    }
+
+    private static void waitFor(BooleanSupplier check) {
         while (true) {
-            synchronized (SRG_SYNC_LOCK) {
-                if (srgUrlsLoaded.contains(srgUrl))
-                    break;
-            }
+            if (check.getAsBoolean()) return;
             try {
                 Thread.sleep(100);
             } catch (InterruptedException e) {
@@ -113,21 +111,12 @@ public class StackTraceDeobfuscator {
         }
     }
 
-    private void ensureNamesLoaded() {
-        if (namesUrl == null)
-            return;
+    private void ensureSrgLoaded() {
+        waitFor(this::hasSrgNames);
+    }
 
-        while (true) {
-            synchronized (NAMES_SYNC_LOCK) {
-                if (namesUrlsLoaded.contains(namesUrl))
-                    break;
-            }
-            try {
-                Thread.sleep(100);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
-        }
+    private void ensureNamesLoaded() {
+        waitFor(this::hasClassNames);
     }
 
     private void loadMappings() {
@@ -269,20 +258,20 @@ public class StackTraceDeobfuscator {
         }
     }
 
-    public void printDeobf() {
-        printDeobf(System.err);
+    public void printDeobf(StackTraceElement[] stackTrace) {
+        printDeobf(stackTrace, System.err);
     }
 
-    public void printDeobf(PrintStream out) {
-        out.println(deobfAsString());
+    public void printDeobf(StackTraceElement[] stackTrace, PrintStream out) {
+        out.println(deobfAsString(stackTrace));
     }
 
-    public String deobfAsString() {
-        StackTraceElement[] elems = deobfuscate();
+    public String deobfAsString(StackTraceElement[] stackTrace) {
+        StackTraceElement[] elems = deobfuscate(stackTrace);
         return Arrays.stream(elems).map(StackTraceElement::toString).collect(Collectors.joining("\n"));
     }
 
-    public StackTraceElement[] deobfuscate() {
+    public StackTraceElement[] deobfuscate(StackTraceElement[] stackTrace) {
         if (srgUrl == null) {
             throw new IllegalStateException("No mappings url has been set");
         }
@@ -297,6 +286,26 @@ public class StackTraceDeobfuscator {
             deobfStackTrace[i] = deobfuscate(stackTrace[i]);
         }
         return deobfStackTrace;
+    }
+
+    public StackTraceElement[] deobfuscateCurrentStackTrace() {
+        StackTraceElement[] stackTrace = Thread.currentThread().getStackTrace();
+        final String thisClass = getClass().getName();
+        boolean foundThisClass = false;
+        int firstIndex;
+        for (firstIndex = 0; firstIndex < stackTrace.length; firstIndex++) {
+            if (stackTrace[firstIndex].getClassName().equals(thisClass))
+                foundThisClass = true;
+            else if (foundThisClass)
+                break;
+        }
+        return deobfuscate(Arrays.copyOfRange(stackTrace, firstIndex, stackTrace.length));
+    }
+
+    public String deobfuscate(Class<?> clazz) {
+        ensureNamesLoaded();
+        String className = clazz.getName().replace('.', '/');
+        return classMappings.getOrDefault(className, className);
     }
 
     private StackTraceElement deobfuscate(StackTraceElement elem) {

@@ -10,6 +10,15 @@
  public abstract class EntityLiving extends EntityLivingBase
  {
      private static final DataParameter<Byte> field_184654_a = EntityDataManager.<Byte>func_187226_a(EntityLiving.class, DataSerializers.field_187191_a);
+@@ -66,7 +69,7 @@
+     protected EntityJumpHelper field_70767_i;
+     private final EntityBodyHelper field_70762_j;
+     protected PathNavigate field_70699_by;
+-    protected final EntityAITasks field_70714_bg;
++    public final EntityAITasks field_70714_bg; // CM public
+     protected final EntityAITasks field_70715_bh;
+     private EntityLivingBase field_70696_bz;
+     private final EntitySenses field_70723_bA;
 @@ -192,11 +195,19 @@
  
      public void func_70642_aH()

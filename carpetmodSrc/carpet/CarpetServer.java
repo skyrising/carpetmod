@@ -1,6 +1,6 @@
 package carpet;
 
-import carpet.helpers.StackTraceDeobfuscator;
+import carpet.helpers.Deobfuscator;
 import carpet.network.PluginChannelManager;
 import carpet.network.ToggleableChannelHandler;
 import carpet.pubsub.*;
@@ -30,6 +30,10 @@ public class CarpetServer // static for now - easier to handle all around the co
     public static final Random rand = new Random((int)((2>>16)*Math.random()));
     public static final PubSubManager PUBSUB = new PubSubManager();
     public static final PubSubMessenger PUBSUB_MESSENGER = new PubSubMessenger(PUBSUB);
+    public static final Deobfuscator DEOBFUSCATOR = Deobfuscator.create()
+            .withMinecraftVersion(CarpetSettings.minecraftVersion)
+            .withSnapshotMcpNames(CarpetSettings.mcpMappings)
+            .loadAsync();
 
     public static MinecraftServer minecraft_server;
     public static PluginChannelManager pluginChannels;
@@ -57,13 +61,6 @@ public class CarpetServer // static for now - easier to handle all around the co
         CarpetSettings.applySettingsFromConf(server);
         LoggerRegistry.initLoggers(server);
         WorldEditBridge.onServerLoaded(server);
-
-        // Precache mappings so as not to lag the server later
-        StackTraceDeobfuscator.create()
-                .withMinecraftVersion(CarpetSettings.minecraftVersion)
-                .withSnapshotMcpNames(CarpetSettings.mcpMappings)
-                .withStackTrace(new StackTraceElement[0])
-                .deobfuscate();
     }
     public static void onLoadAllWorlds(MinecraftServer server)
     {

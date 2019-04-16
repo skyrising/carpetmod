@@ -7,8 +7,8 @@ package carpet.carpetclient;
  *  
  */
 
+import carpet.CarpetServer;
 import carpet.CarpetSettings;
-import carpet.helpers.StackTraceDeobfuscator;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
@@ -178,7 +178,6 @@ public class CarpetClientChunkLogger {
     }
 
     private class StackTraces {
-        StackTraceDeobfuscator deobf = StackTraceDeobfuscator.create().withMinecraftVersion(CarpetSettings.minecraftVersion).withSnapshotMcpNames(CarpetSettings.mcpMappings);
         HashMap<String, Integer> stackTraceToIndex = new HashMap();
         ArrayList<String> allTracesDeobfuscated = new ArrayList();
 
@@ -238,7 +237,7 @@ public class CarpetClientChunkLogger {
 
         private String asString(StackTraceElement[] trace, boolean deobfuscated) {
             if (deobfuscated) {
-                trace = deobf.withStackTrace(trace).deobfuscate();
+                trace = CarpetServer.DEOBFUSCATOR.deobfuscate(trace);
             }
             String stacktrace = new String();
             int i;
