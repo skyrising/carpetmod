@@ -54,6 +54,9 @@ public class HUDController
 
         player_huds.clear();
 
+        if (LoggerRegistry.__autosave)
+            log_autosave(server);
+
         if (LoggerRegistry.__tps)
             log_tps(server);
 
@@ -77,6 +80,22 @@ public class HUDController
             ((ServerPlayerEntity)player).networkHandler.sendPacket(packet);
         }
     }
+
+    private static void log_autosave(MinecraftServer server){
+        int gametick = server.getTicks();
+        int previous = gametick%900;
+
+        if(gametick != 0 && previous == 0) {
+            previous = 900;
+        }
+        int next = 900 - previous;
+        String color = Messenger.heatmap_color(previous,860);
+        Text[] message = new Text[]{Messenger.m(null,
+                "g Prev: ", String.format(Locale.US, "%s %d",color, previous),
+                "g  Next: ", String.format(Locale.US,"%s %d", color, next))};
+        LoggerRegistry.getLogger("autosave").log(() -> message, "Prev", previous, "Next", next);
+    }
+
     private static void log_tps(MinecraftServer server)
     {
         double MSPT = MathHelper.average(server.lastTickLengths) * 1.0E-6D;
