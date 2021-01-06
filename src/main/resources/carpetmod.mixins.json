@@ -51,6 +51,7 @@
     "ai.EntityAIVillagerMateMixin",
     "ai.GoalSelectorMixin",
     "antiCheatSpeed.ServerPlayNetworkHandlerMixin",
+    "asyncBeaconUpdates.BeaconBlockMixin",
     "autoCraftingDropper.DropperBlockEntityMixin",
     "autoCraftingDropper.DropperBlockMixin",
     "autoCraftingTable.BlockEntityMixin",
