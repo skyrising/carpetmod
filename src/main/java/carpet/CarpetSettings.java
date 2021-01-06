@@ -86,6 +86,11 @@ public final class CarpetSettings
     })
     public static boolean commandBlockInfo = true;
 
+    @Rule(desc = "Enables /loadchunk command", category = COMMANDS, extra = {
+            "Loads a chunk remotely"
+    })
+    public static boolean commandLoadChunk = true;
+
     @Rule(desc = "Enables /entityinfo command", category = COMMANDS, extra = {
             "Also enables yellow carpet placement action if 'carpets' rule is turned on as well"
     })
