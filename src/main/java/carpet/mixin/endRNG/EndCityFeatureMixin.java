@@ -14,7 +14,7 @@ import java.util.Random;
 public class EndCityFeatureMixin {
     @Redirect(method = "method_27834", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;method_25976(III)Ljava/util/Random;"))
     private Random endRNG(World world, int x, int z, int seed) {
-        if (CarpetSettings.endRNG) return CarpetServer.setRandomSeed(x, z, seed);
+        if (CarpetSettings.endRNG) return CarpetServer.getInstance().setRandomSeed(x, z, seed);
         return world.method_25976(x, z, seed);
     }
 }

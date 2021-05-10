@@ -28,6 +28,7 @@ import carpet.utils.TickingArea;
 import carpet.utils.extensions.WorldWithBlockEventSerializer;
 import carpet.worldedit.WorldEditBridge;
 import net.fabricmc.loader.api.FabricLoader;
+import net.minecraft.server.integrated.IntegratedServer;
 import net.minecraft.world.World;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -45,9 +46,6 @@ public final class CarpetSettings
     private CarpetSettings() {}
 
     public static boolean locked = false;
-
-    // TODO: replace these constants at build time
-    public static final String carpetVersion = FabricLoader.getInstance().getModContainer("carpetmod").get().getMetadata().getVersion().getFriendlyString();
 
     public static final Logger LOG = LogManager.getLogger("Carpet|Settings");
 
@@ -169,8 +167,10 @@ public final class CarpetSettings
     @Rule(desc = "Sets the instant scheduled updates instantly to true. The boolean used in world population that can be exploited turning true making all repeaters, comperators, observers and similar components update instantly.", category = CREATIVE, validator = "validateInstantScheduling")
     public static boolean instantScheduling = false;
     private static boolean validateInstantScheduling(boolean value) {
+        MinecraftServer server = CarpetServer.getNullableMinecraftServer();
+        if (server == null || server.worlds == null) return true;
         for (int dim = 0; dim < 3; dim++) {
-            ServerWorld world = CarpetServer.minecraft_server.worlds[dim];
+            ServerWorld world = server.worlds[dim];
             ((WorldAccessor) world).setScheduledUpdatesAreImmediate(value);
         }
         return true;
@@ -277,7 +277,8 @@ public final class CarpetSettings
     public static boolean redstoneMultimeter = false;
 
     private static boolean validateRedstoneMultimeter(boolean value) {
-        CarpetServer.rsmmChannel.setEnabled(value);
+        CarpetServer carpet = CarpetServer.getNullableInstance();
+        if (carpet != null) carpet.rsmmChannel.setEnabled(value);
         return true;
     }
 
@@ -375,10 +376,18 @@ public final class CarpetSettings
     private static boolean validateViewDistance(int value) {
         if (value != 0 && (value < 2 || value > 64))
             return false;
-        if (value == 0)
-            value = ((MinecraftDedicatedServer) CarpetServer.minecraft_server).method_33353("view-distance", 10);
-        if (value != CarpetServer.minecraft_server.getPlayerManager().getViewDistance())
-            CarpetServer.minecraft_server.getPlayerManager().setViewDistance(value);
+        MinecraftServer server = CarpetServer.getNullableMinecraftServer();
+        if (server == null) return true;
+        if (value == 0) {
+            if (server.isDedicated()) {
+                value = ((MinecraftDedicatedServer) server).method_33353("view-distance", 10);
+            } else {
+                return false;
+            }
+        }
+        if (value != server.getPlayerManager().getViewDistance()) {
+            server.getPlayerManager().setViewDistance(value);
+        }
         return true;
     }
 
@@ -388,16 +397,19 @@ public final class CarpetSettings
     })
     public static boolean tickingAreas = false;
     private static boolean validateTickingAreas(boolean value) {
-        if (value && CarpetServer.minecraft_server.worlds != null)
-            TickingArea.initialChunkLoad(CarpetServer.minecraft_server, false);
+        MinecraftServer server = CarpetServer.getNullableMinecraftServer();
+        if (value && server != null && server.worlds != null)
+            TickingArea.initialChunkLoad(server, false);
         return true;
     }
 
     @Rule(desc = "Removes the spawn chunks.", category = CREATIVE, validator = "validateDisableSpawnChunks")
     public static boolean disableSpawnChunks = false;
     private static boolean validateDisableSpawnChunks(boolean value) {
-        if (!value && CarpetServer.minecraft_server.worlds != null) {
-            World overworld = CarpetServer.minecraft_server.worlds[0];
+        MinecraftServer server = CarpetServer.getNullableMinecraftServer();
+        if (server == null) return true;
+        if (!value && server.worlds != null) {
+            World overworld = server.worlds[0];
             for (ColumnPos chunk : new TickingArea.SpawnChunks().listIncludedChunks(overworld))
                 overworld.getChunkManager().method_27347(chunk.x, chunk.z);
         }
@@ -421,7 +433,8 @@ public final class CarpetSettings
     @CreativeDefault
     public static boolean worldEdit = false;
     private static boolean validateWorldEdit(boolean value) {
-        CarpetServer.wecuiChannel.setEnabled(value && WorldEditBridge.worldEditPresent);
+        CarpetServer carpet = CarpetServer.getNullableInstance();
+        if (carpet != null) carpet.wecuiChannel.setEnabled(value && WorldEditBridge.worldEditPresent);
         return true;
     }
 
@@ -465,9 +478,10 @@ public final class CarpetSettings
     @Rule(desc = "Saves the block event on server shutdown and loads at server startup.", category = FIX, validator = "validateBlockEventSerializer")
     public static boolean blockEventSerializer;
     private static boolean validateBlockEventSerializer(boolean value) {
-        if (!value){
+        MinecraftServer server = CarpetServer.getNullableMinecraftServer();
+        if (server != null && !value) {
             for (int dim = 0; dim < 3; dim++) {
-                ServerWorld world = CarpetServer.minecraft_server.worlds[dim];
+                ServerWorld world = server.worlds[dim];
                 ((WorldWithBlockEventSerializer) world).getBlockEventSerializer().markDirty();
             }
         }
@@ -1178,8 +1192,12 @@ public final class CarpetSettings
             return field.getType() == double.class;
     }
 
-    @SuppressWarnings("unchecked")
     public static boolean set(String ruleName, String value) {
+        return set(ruleName, value, true);
+    }
+
+    @SuppressWarnings("unchecked")
+    public static boolean set(String ruleName, String value, boolean validate) {
         Field field = rules.get(ruleName.toLowerCase(Locale.ENGLISH));
         if (field == null)
             return false;
@@ -1221,14 +1239,16 @@ public final class CarpetSettings
             throw new AssertionError("Rule \"" + ruleName + "\" has an invalid type");
         }
 
-        String validatorMethod = field.getDeclaredAnnotation(Rule.class).validator();
-        if (!validatorMethod.isEmpty()) {
-            try {
-                Method validator = CarpetSettings.class.getDeclaredMethod(validatorMethod, field.getType());
-                if (!((Boolean) validator.invoke(null, newValue)))
-                    return false;
-            } catch (ReflectiveOperationException e) {
-                throw new AssertionError(e);
+        if (validate) {
+            String validatorMethod = field.getDeclaredAnnotation(Rule.class).validator();
+            if (!validatorMethod.isEmpty()) {
+                try {
+                    Method validator = CarpetSettings.class.getDeclaredMethod(validatorMethod, field.getType());
+                    if (!((Boolean) validator.invoke(null, newValue)))
+                        return false;
+                } catch (ReflectiveOperationException e) {
+                    throw new AssertionError(e);
+                }
             }
         }
 
@@ -1272,6 +1292,12 @@ public final class CarpetSettings
     {
         resetToVanilla();
         applySettingsFromConf(server);
+    }
+
+    public static void reset() {
+        for (String rule : rules.keySet()) {
+            set(rule, getDefault(rule), false);
+        }
     }
 
     public static void resetToVanilla() {

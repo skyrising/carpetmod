@@ -41,7 +41,7 @@ public class CarpetCommands {
         handler.method_29056(new CommandWaypoint());
 
         // ----- RSMM Start ----- //
-        handler.method_29056(new MeterCommand(CarpetServer.rsmmServer));
+        handler.method_29056(new MeterCommand());
         // ----- RSMM End ----- //
     }
 }

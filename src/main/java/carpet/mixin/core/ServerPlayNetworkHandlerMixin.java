@@ -25,7 +25,7 @@ public class ServerPlayNetworkHandlerMixin {
     @Inject(method = "onCustomPayload", at = @At("TAIL"))
     private void handleCarpetCustomPayloads(CustomPayloadC2SPacket packet, CallbackInfo ci) {
         if (!packet.method_32939().startsWith("MC|")) {
-            CarpetServer.pluginChannels.process(player, packet);
+            CarpetServer.getInstance().pluginChannels.process(player, packet);
         }
     }
 

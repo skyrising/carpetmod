@@ -177,7 +177,7 @@ public class AIHelper {
     @Nullable
     public static MobEntity getOwner(GoalSelector tasks) {
         return TASK_TO_ENTITY_MAP.computeIfAbsent(tasks, t -> {
-            for (ServerWorld world : CarpetServer.minecraft_server.worlds) {
+            for (ServerWorld world : CarpetServer.getMinecraftServer().worlds) {
                 for (MobEntity e : world.method_26034(MobEntity.class, x -> true)) {
                     if (((MobEntityAccessor) e).getGoalSelector() == tasks) return e;
                 }

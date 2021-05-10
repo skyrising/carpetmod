@@ -15,7 +15,7 @@ public class ScoreboardCommandMixin {
     @Redirect(method = "method_31845", at = @At(value = "INVOKE", target = "Lnet/minecraft/scoreboard/Scoreboard;addObjective(Ljava/lang/String;Lnet/minecraft/scoreboard/ScoreboardCriterion;)Lnet/minecraft/scoreboard/ScoreboardObjective;"))
     private ScoreboardObjective initalizeScores(Scoreboard scoreboard, String name, ScoreboardCriterion criteria) {
         ScoreboardObjective score = scoreboard.addObjective(name, criteria);
-        StatHelper.initialize(scoreboard, CarpetServer.minecraft_server, score);
+        StatHelper.initialize(scoreboard, CarpetServer.getMinecraftServer(), score);
         return score;
     }
 }

@@ -33,7 +33,7 @@ class ThreadSafeCache {
         if (now - lastRefresh > REFRESH_DELAY) {
             Set<UUID> onlineIds = new HashSet<UUID>();
 
-            for (Object object : CarpetServer.minecraft_server.getPlayerManager().getPlayerList()) {
+            for (Object object : CarpetServer.getMinecraftServer().getPlayerManager().getPlayerList()) {
                 if (object != null) {
                     ServerPlayerEntity player = (ServerPlayerEntity) object;
                     onlineIds.add(player.getUuid());

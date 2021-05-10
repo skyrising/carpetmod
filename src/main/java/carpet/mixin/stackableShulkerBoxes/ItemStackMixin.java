@@ -1,6 +1,6 @@
 package carpet.mixin.stackableShulkerBoxes;
 
-import carpet.CarpetServer;
+import carpet.CarpetMod;
 import carpet.CarpetSettings;
 import carpet.utils.extensions.ExtendedItem;
 import carpet.utils.extensions.ExtendedItemStack;
@@ -31,7 +31,7 @@ public abstract class ItemStackMixin implements ExtendedItemStack {
 
     @Inject(method = "getMaxCount", at = @At("HEAD"), cancellable = true)
     private void stackableShulkersPlayerInventory(CallbackInfoReturnable<Integer> cir) {
-        if (!CarpetSettings.stackableShulkersPlayerInventory || !CarpetServer.playerInventoryStacking.get()) return;
+        if (!CarpetSettings.stackableShulkersPlayerInventory || !CarpetMod.playerInventoryStacking.get()) return;
         if (getItem() instanceof ShulkerBoxItem && !hasTag()) cir.setReturnValue(64);
     }
 }

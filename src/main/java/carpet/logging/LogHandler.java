@@ -33,7 +33,7 @@ public abstract class LogHandler
         @Override
         public void onRemovePlayer(String playerName)
         {
-            ServerPlayerEntity player = CarpetServer.minecraft_server.getPlayerManager().getPlayer(playerName);
+            ServerPlayerEntity player = CarpetServer.getMinecraftServer().getPlayerManager().getPlayer(playerName);
             if (player != null)
                 HUDController.clear_player(player);
         }

@@ -12,11 +12,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class PlayerManagerMixin {
     @Inject(method = "method_33721", at = @At("RETURN"))
     private void onPlayerConnect(ServerPlayerEntity player, CallbackInfo ci) {
-        CarpetServer.playerConnected(player);
+        CarpetServer.getInstance().playerConnected(player);
     }
 
     @Inject(method = "remove", at = @At("HEAD"))
     private void onPlayerDisconnect(ServerPlayerEntity player, CallbackInfo ci) {
-        CarpetServer.playerDisconnected(player);
+        CarpetServer.getInstance().playerDisconnected(player);
     }
 }

@@ -1,5 +1,7 @@
 package carpet.pubsub;
 
+import carpet.CarpetMod;
+
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.Map;
@@ -7,7 +9,7 @@ import java.util.TreeMap;
 
 /**
  * Central interface for PubSub interactions
- * @see carpet.CarpetServer#PUBSUB
+ * @see CarpetMod#PUBSUB
  */
 public final class PubSubManager {
     public final PubSubNode ROOT = new PubSubNode(null, "");

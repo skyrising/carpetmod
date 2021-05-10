@@ -45,7 +45,7 @@ public class PlayerManagerMixin {
     private void storeFakePlayerData(CallbackInfo ci) {
         ArrayList<String> list = new ArrayList<>();
         if(!CarpetSettings.reloadFakePlayers){
-            CarpetServer.writeConf(server, list);
+            CarpetServer.getInstance().writeConf(list);
             return;
         }
         for (ServerPlayerEntity p : players) {
@@ -53,6 +53,6 @@ public class PlayerManagerMixin {
                 list.add(FakeServerPlayerEntity.getInfo(p));
             }
         }
-        CarpetServer.writeConf(server, list);
+        CarpetServer.getInstance().writeConf(list);
     }
 }

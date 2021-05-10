@@ -54,22 +54,22 @@ public abstract class MinecraftServerMixin {
 
     @Inject(method = "createWorlds", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;prepareStartRegion()V"))
     private void onLoadAllWorlds(String saveName, String worldNameIn, long seed, LevelGeneratorType type, String generatorOptions, CallbackInfo ci) {
-        CarpetServer.onLoadAllWorlds((MinecraftServer) (Object) this);
+        CarpetServer.getInstance().onLoadAllWorlds();
     }
 
     @Inject(method = "createWorlds", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;prepareStartRegion()V", shift = At.Shift.AFTER))
     private void loadCarpetBots(String saveName, String worldNameIn, long seed, LevelGeneratorType type, String generatorOptions, CallbackInfo ci) {
-        CarpetServer.loadBots((MinecraftServer) (Object) this);
+        CarpetServer.getInstance().loadBots();
     }
 
     @Inject(method = "save", at = @At("RETURN"))
     private void onWorldsSaved(boolean isSilent, CallbackInfo ci) {
-        CarpetServer.onWorldsSaved((MinecraftServer) (Object) this);
+        CarpetServer.getInstance().onWorldsSaved();
     }
 
     @Inject(method = "tickWorlds", at = @At(value = "FIELD", target = "Lnet/minecraft/server/MinecraftServer;ticks:I", ordinal = 0, shift = At.Shift.AFTER))
     private void startTick(CallbackInfo ci) {
-        CarpetServer.tick((MinecraftServer) (Object) this);
+        CarpetServer.getInstance().tick();
         if (CarpetProfiler.tick_health_requested != 0) {
             CarpetProfiler.start_tick_profiling();
         }

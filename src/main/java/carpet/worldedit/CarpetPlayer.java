@@ -147,7 +147,7 @@ class CarpetPlayer extends AbstractPlayerActor {
 
     @Override
     public boolean hasPermission(String perm) {
-        int opLevel = CarpetServer.minecraft_server.getPlayerManager().getOpList().method_33753(player.getGameProfile());
+        int opLevel = CarpetServer.getMinecraftServer().getPlayerManager().getOpList().method_33753(player.getGameProfile());
         int requiredOpLevel = CarpetWorldEdit.inst.getConfig().getPermissionLevel(perm);
         return opLevel >= requiredOpLevel;
     }

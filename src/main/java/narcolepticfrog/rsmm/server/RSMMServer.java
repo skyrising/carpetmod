@@ -105,7 +105,7 @@ public class RSMMServer implements StateChangeListener, PistonPushListener, Tick
      * @param packet The packet to be sent.
      */
     public void sendToPlayer(ServerPlayerEntity player, RSMMCPacket packet) {
-        if (CarpetServer.pluginChannels.tracker.isRegistered(player, "RSMM")) {
+        if (CarpetServer.getInstance().pluginChannels.tracker.isRegistered(player, "RSMM")) {
             player.networkHandler.sendPacket(new CustomPayloadS2CPacket("RSMM", packet.toBuffer()));
         }
     }
@@ -263,9 +263,5 @@ public class RSMMServer implements StateChangeListener, PistonPushListener, Tick
                 ServerPacketEventDispatcher.dispatchCustomPayload(player, packet.method_32939(), packet.method_32941());
             }
         };
-    }
-
-    public void registerCommands(CommandManager mgr) {
-        mgr.method_29056(new MeterCommand(this));
     }
 }

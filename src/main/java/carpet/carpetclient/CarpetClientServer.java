@@ -2,6 +2,7 @@ package carpet.carpetclient;
 
 import java.util.LinkedHashSet;
 
+import carpet.CarpetServer;
 import carpet.network.PacketSplitter;
 import carpet.network.PluginChannelHandler;
 import net.minecraft.network.packet.c2s.play.CustomPayloadC2SPacket;
@@ -16,7 +17,6 @@ public class CarpetClientServer implements PluginChannelHandler {
 
     public static boolean activateInstantMine = true;
     private final MinecraftServer minecraftServer;
-    private static final LinkedHashSet<ServerPlayerEntity> players = new LinkedHashSet<>();
     public static final String CARPET_CHANNEL_NAME = "carpet:client";
     public static final String MINE_CHANNEL_NAME = "carpet:mine";
 
@@ -59,25 +59,19 @@ public class CarpetClientServer implements PluginChannelHandler {
     }
 
     public boolean register(String channel, ServerPlayerEntity sender) {
-        players.add(sender);
         CarpetClientMessageHandler.sendAllGUIOptions(sender);
         CarpetClientMessageHandler.sendCustomRecipes(sender);
         return true;
     }
 
     public void unregister(String channel, ServerPlayerEntity player) {
-        players.remove(player);
         CarpetClientMarkers.unregisterPlayerVillageMarkers(player);
         CarpetClientChunkLogger.logger.unregisterPlayer(player);
         CarpetClientRandomtickingIndexing.unregisterPlayer(player);
     }
 
-    static public LinkedHashSet<ServerPlayerEntity> getRegisteredPlayers() {
-        return players;
-    }
-
     public static boolean isPlayerRegistered(ServerPlayerEntity player) {
-        return players.contains(player);
+        return CarpetServer.getInstance().pluginChannels.tracker.isRegistered(player, CARPET_CHANNEL_NAME);
     }
 
     public static boolean sendProtected(PacketByteBuf data) {
@@ -101,7 +95,7 @@ public class CarpetClientServer implements PluginChannelHandler {
     }
 
     public static void sender(PacketByteBuf data) {
-        for (ServerPlayerEntity player : CarpetClientServer.getRegisteredPlayers()) {
+        for (ServerPlayerEntity player : CarpetServer.getInstance().pluginChannels.tracker.getPlayers(CARPET_CHANNEL_NAME)) {
             data.retain();
             PacketSplitter.send(player, CARPET_CHANNEL_NAME, data);
         }

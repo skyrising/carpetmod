@@ -40,7 +40,7 @@ class CarpetPlatform extends AbstractPlatform implements MultiUserPlatform {
 
     CarpetPlatform(CarpetWorldEdit mod) {
         this.mod = mod;
-        this.server = CarpetServer.minecraft_server;
+        this.server = CarpetServer.getMinecraftServer();
     }
 
     boolean isHookingEvents() {

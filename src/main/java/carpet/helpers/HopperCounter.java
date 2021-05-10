@@ -1,6 +1,6 @@
 package carpet.helpers;
 
-import carpet.CarpetServer;
+import carpet.CarpetMod;
 import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
 import it.unimi.dsi.fastutil.objects.Object2LongLinkedOpenHashMap;
@@ -38,7 +38,7 @@ public class HopperCounter
     private HopperCounter(DyeColor color, String name) {
         this.name = name;
         this.color = color;
-        pubSubProvider = new PubSubInfoProvider<>(CarpetServer.PUBSUB, "carpet.counter." + name, 0, this::getTotalItems);
+        pubSubProvider = new PubSubInfoProvider<>(CarpetMod.PUBSUB, "carpet.counter." + name, 0, this::getTotalItems);
     }
 
     public void add(MinecraftServer server, ItemStack stack) {

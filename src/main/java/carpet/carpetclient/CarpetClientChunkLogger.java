@@ -7,7 +7,7 @@ package carpet.carpetclient;
  *
  */
 
-import carpet.CarpetServer;
+import carpet.CarpetMod;
 import carpet.CarpetSettings;
 import carpet.helpers.StackTraceDeobfuscator;
 import carpet.mixin.accessors.ServerChunkCacheAccessor;
@@ -288,7 +288,7 @@ public class CarpetClientChunkLogger {
 
         private String asString(StackTraceElement[] trace, boolean deobfuscated) {
             if (deobfuscated) {
-                StackTraceDeobfuscator deobfuscator = CarpetServer.getDeobfuscator(true);
+                StackTraceDeobfuscator deobfuscator = CarpetMod.getDeobfuscator(true);
                 if (deobfuscator != null) trace = deobfuscator.deobfuscate(trace);
             }
             StringBuilder stacktrace = new StringBuilder();

@@ -1,77 +1,83 @@
 package carpet;
 
-import carpet.helpers.StackTraceDeobfuscator;
+import carpet.carpetclient.CarpetClientServer;
+import carpet.helpers.TickSpeed;
+import carpet.logging.LoggerRegistry;
 import carpet.network.PluginChannelManager;
 import carpet.network.ToggleableChannelHandler;
 import carpet.patches.FakeServerPlayerEntity;
-import carpet.pubsub.*;
+import carpet.pubsub.PubSubInfoProvider;
+import carpet.pubsub.PubSubMessenger;
 import carpet.utils.*;
 import carpet.utils.extensions.WaypointContainer;
 import carpet.worldedit.WorldEditBridge;
-
-import java.io.*;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-
 import narcolepticfrog.rsmm.events.TickStartEventDispatcher;
 import narcolepticfrog.rsmm.server.RSMMServer;
-
-import carpet.carpetclient.CarpetClientServer;
-
-import carpet.helpers.TickSpeed;
-import carpet.logging.LoggerRegistry;
 import net.minecraft.entity.SpawnGroup;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Pair;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
 
 import javax.annotation.Nullable;
+import java.io.*;
+import java.util.ArrayList;
+import java.util.Locale;
+import java.util.Random;
 
-public class CarpetServer // static for now - easier to handle all around the code, its one anyways
-{
-    public static final Random rand = new Random((int)((2>>16)*Math.random()));
-    public static final PubSubManager PUBSUB = new PubSubManager();
-    public static final PubSubMessenger PUBSUB_MESSENGER = new PubSubMessenger(PUBSUB);
+public class CarpetServer {
+    private static CarpetServer instance;
 
-    private static final Logger LOGGER = LogManager.getLogger("Carpet|Server");
-    private static final CompletableFuture<StackTraceDeobfuscator> DEOBFUSCATOR = StackTraceDeobfuscator.loadDefault();
+    public final MinecraftServer server;
 
-    public static MinecraftServer minecraft_server;
-    public static PluginChannelManager pluginChannels;
-    public static RSMMServer rsmmServer;
-    public static ToggleableChannelHandler rsmmChannel;
-    public static ToggleableChannelHandler wecuiChannel;
-    public static ThreadLocal<Boolean> playerInventoryStacking = ThreadLocal.withInitial(() -> Boolean.FALSE);
+    public PluginChannelManager pluginChannels;
+    public RSMMServer rsmmServer;
+    public ToggleableChannelHandler rsmmChannel;
+    public ToggleableChannelHandler wecuiChannel;
 
-    private static CarpetClientServer CCServer;
-
-    public static void init(MinecraftServer server) //aka constructor of this static singleton class
-    {
-        minecraft_server = server;
+    private CarpetServer(MinecraftServer server) {
+        this.server = server;
         pluginChannels = new PluginChannelManager(server);
-        pluginChannels.register(PUBSUB_MESSENGER);
-
-        CCServer = new CarpetClientServer(server);
-        pluginChannels.register(CCServer);
+        pluginChannels.register(new PubSubMessenger(CarpetMod.PUBSUB));
+        pluginChannels.register(new CarpetClientServer(server));
 
         rsmmServer = new RSMMServer(server);
         rsmmChannel = new ToggleableChannelHandler(pluginChannels, rsmmServer.createChannelHandler(), false);
         wecuiChannel = new ToggleableChannelHandler(pluginChannels, WorldEditBridge.createChannelHandler(), false);
     }
 
-    public static void onServerLoaded(MinecraftServer server) {
+    public static CarpetServer init(MinecraftServer server) {
+        return instance = new CarpetServer(server);
+    }
+
+    public static CarpetServer getInstance() {
+        if (instance == null) throw new IllegalStateException("No CarpetServer instance");
+        return instance;
+    }
+
+    @Nullable
+    public static CarpetServer getNullableInstance() {
+        return instance;
+    }
+
+    public static MinecraftServer getMinecraftServer() {
+        return getInstance().server;
+    }
+
+    @Nullable
+    public static MinecraftServer getNullableMinecraftServer() {
+        return instance == null ? null : instance.server;
+    }
+
+    public void onServerLoaded() {
+        CarpetSettings.reset();
         CarpetSettings.applySettingsFromConf(server);
         LoggerRegistry.initLoggers(server);
         LoggerRegistry.readSaveFile(server);
         WorldEditBridge.onServerLoaded(server);
     }
 
-    public static void onLoadAllWorlds(MinecraftServer server)
-    {
+    public void onLoadAllWorlds() {
         TickingArea.loadConfig(server);
         for (ServerWorld world : server.worlds) {
             int dim = world.dimension.getType().getRawId();
@@ -82,16 +88,16 @@ public class CarpetServer // static for now - easier to handle all around the co
             }
 
             String prefix = "minecraft." + world.dimension.getType().getSaveDir();
-            new PubSubInfoProvider<>(PUBSUB,prefix + ".chunk_loading.dropped_chunks.hash_size",20,
+            new PubSubInfoProvider<>(CarpetMod.PUBSUB,prefix + ".chunk_loading.dropped_chunks.hash_size",20,
                     () -> ChunkLoading.getCurrentHashSize(world));
             for (SpawnGroup creatureType : SpawnGroup.values()) {
                 String mobCapPrefix = prefix + ".mob_cap." + creatureType.name().toLowerCase(Locale.ROOT);
-                new PubSubInfoProvider<>(PUBSUB, mobCapPrefix + ".filled", 20, () -> {
+                new PubSubInfoProvider<>(CarpetMod.PUBSUB, mobCapPrefix + ".filled", 20, () -> {
                     Pair<Integer, Integer> mobCap = SpawnReporter.mobcaps.get(dim).get(creatureType);
                     if (mobCap == null) return 0;
                     return mobCap.getLeft();
                 });
-                new PubSubInfoProvider<>(PUBSUB, mobCapPrefix + ".total", 20, () -> {
+                new PubSubInfoProvider<>(CarpetMod.PUBSUB, mobCapPrefix + ".total", 20, () -> {
                     Pair<Integer, Integer> mobCap = SpawnReporter.mobcaps.get(dim).get(creatureType);
                     if (mobCap == null) return 0;
                     return mobCap.getRight();
@@ -99,8 +105,8 @@ public class CarpetServer // static for now - easier to handle all around the co
             }
         }
     }
-    public static void onWorldsSaved(MinecraftServer server)
-    {
+
+    public void onWorldsSaved() {
         TickingArea.saveConfig(server);
         for (ServerWorld world : server.worlds) {
             try {
@@ -111,8 +117,7 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
     }
 
-    public static void tick(MinecraftServer server)
-    {
+    public void tick() {
         TickSpeed.tick(server);
         if (CarpetSettings.redstoneMultimeter)
         {
@@ -120,28 +125,26 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
         HUDController.update_hud(server);
         WorldEditBridge.onStartTick();
-        PUBSUB.update(server.getTicks());
+        CarpetMod.PUBSUB.update(server.getTicks());
     }
-    public static void playerConnected(ServerPlayerEntity player)
-    {
+
+    public void playerConnected(ServerPlayerEntity player) {
         pluginChannels.onPlayerConnected(player);
         LoggerRegistry.playerConnected(player);
     }
 
-    public static void playerDisconnected(ServerPlayerEntity player)
-    {
+    public void playerDisconnected(ServerPlayerEntity player) {
         pluginChannels.onPlayerDisconnected(player);
         LoggerRegistry.playerDisconnected(player);
     }
-    
-    public static Random setRandomSeed(int p_72843_1_, int p_72843_2_, int p_72843_3_)
-    {
-        long i = (long)p_72843_1_ * 341873128712L + (long)p_72843_2_ * 132897987541L + CCServer.getMinecraftServer().worlds[0].getLevelProperties().method_28225() + (long)p_72843_3_;
-        rand.setSeed(i);
-        return rand;
+
+    public Random setRandomSeed(int p_72843_1_, int p_72843_2_, int p_72843_3_) {
+        long i = (long) p_72843_1_ * 341873128712L + (long) p_72843_2_ * 132897987541L + server.worlds[0].getLevelProperties().method_28225() + (long) p_72843_3_;
+        CarpetMod.rand.setSeed(i);
+        return CarpetMod.rand;
     }
 
-    public static void loadBots(MinecraftServer server) {
+    public void loadBots() {
         try
         {
             File settings_file = server.getLevelStorage().method_28330(server.getLevelName(), "bot.conf");
@@ -166,36 +169,20 @@ public class CarpetServer // static for now - easier to handle all around the co
         }
     }
 
-    public static void writeConf(MinecraftServer server, ArrayList<String> names)
-    {
-        try
-        {
+    public void writeConf(ArrayList<String> names) {
+        try {
             File settings_file = server.getLevelStorage().method_28330(server.getLevelName(), "bot.conf");
-            if(names != null) {
+            if (names != null) {
                 FileWriter fw = new FileWriter(settings_file);
                 for (String name : names) {
-                    fw.write(name +"\n");
+                    fw.write(name + "\n");
                 }
                 fw.close();
             } else {
                 settings_file.delete();
             }
-        }
-        catch (IOException e)
-        {
+        } catch (IOException e) {
             e.printStackTrace();
-        }
-    }
-
-    @Nullable
-    public static StackTraceDeobfuscator getDeobfuscator(boolean block) {
-        if (!DEOBFUSCATOR.isDone() && !block) return null;
-        if (DEOBFUSCATOR.isCompletedExceptionally() || DEOBFUSCATOR.isCancelled()) return null;
-        try {
-            return DEOBFUSCATOR.join();
-        } catch (RuntimeException e) {
-            LOGGER.debug(e);
-            return null;
         }
     }
 }

@@ -1,5 +1,6 @@
 package narcolepticfrog.rsmm;
 
+import carpet.CarpetServer;
 import carpet.commands.CommandCarpetBase;
 import narcolepticfrog.rsmm.server.RSMMServer;
 import net.minecraft.class_6182;
@@ -15,12 +16,6 @@ import java.util.List;
 
 public class MeterCommand extends CommandCarpetBase
 {
-    RSMMServer rsmmServer;
-
-    public MeterCommand(RSMMServer rsmmServer) {
-        this.rsmmServer = rsmmServer;
-    }
-
     @Override
     public String method_29277() {
         return "meter";
@@ -46,6 +41,7 @@ public class MeterCommand extends CommandCarpetBase
             return;
         }
         ServerPlayerEntity player = (ServerPlayerEntity)sender;
+        RSMMServer rsmmServer = CarpetServer.getInstance().rsmmServer;
 
         if (args[0].equals("name")) {
             if (rsmmServer.getNumMeters(player) <= 0) {
@@ -117,7 +113,7 @@ public class MeterCommand extends CommandCarpetBase
         if (args.length == 1) {
             return method_28732(args, "name", "color", "removeAll", "group", "listGroups");
         } else if (args.length == 2 && args[0].equals("group")) {
-            return method_28731(args, rsmmServer.getGroupNames());
+            return method_28731(args, CarpetServer.getInstance().rsmmServer.getGroupNames());
         } else {
             return Collections.<String>emptyList();
         }

@@ -1,5 +1,6 @@
 package carpet.helpers;
 
+import carpet.CarpetMod;
 import carpet.CarpetServer;
 import carpet.pubsub.PubSubInfoProvider;
 import carpet.utils.Messenger;
@@ -26,11 +27,11 @@ public class TickSpeed
     public static boolean is_paused = false;
     public static boolean is_superHot = false;
 
-    private static PubSubInfoProvider<Float> PUBSUB_TICKRATE = new PubSubInfoProvider<>(CarpetServer.PUBSUB, "carpet.tick.rate", 0, () -> tickrate);
+    private static final PubSubInfoProvider<Float> PUBSUB_TICKRATE = new PubSubInfoProvider<>(CarpetMod.PUBSUB, "carpet.tick.rate", 0, () -> tickrate);
 
     static {
-        new PubSubInfoProvider<>(CarpetServer.PUBSUB, "minecraft.performance.mspt", 20, TickSpeed::getMSPT);
-        new PubSubInfoProvider<>(CarpetServer.PUBSUB, "minecraft.performance.tps", 20, TickSpeed::getTPS);
+        new PubSubInfoProvider<>(CarpetMod.PUBSUB, "minecraft.performance.mspt", 20, TickSpeed::getMSPT);
+        new PubSubInfoProvider<>(CarpetMod.PUBSUB, "minecraft.performance.tps", 20, TickSpeed::getTPS);
     }
 
     public static void reset_player_active_timeout()
@@ -126,7 +127,7 @@ public class TickSpeed
         }
         else
         {
-            Messenger.print_server_message(CarpetServer.minecraft_server, String.format("... Time warp completed with %d tps, or %.2f mspt",tps, mspt ));
+            Messenger.print_server_message(CarpetServer.getMinecraftServer(), String.format("... Time warp completed with %d tps, or %.2f mspt",tps, mspt ));
         }
         time_bias = 0;
 
@@ -175,7 +176,7 @@ public class TickSpeed
     }
 
     public static double getMSPT() {
-        return MathHelper.average(CarpetServer.minecraft_server.lastTickLengths) * 1.0E-6D;
+        return MathHelper.average(CarpetServer.getMinecraftServer().lastTickLengths) * 1.0E-6D;
     }
 
     public static double getTPS() {

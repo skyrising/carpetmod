@@ -3,8 +3,11 @@ package carpet.helpers;
 import carpet.CarpetServer;
 import carpet.utils.extensions.ExtendedScore;
 import java.util.Collection;
+
+import net.minecraft.scoreboard.Scoreboard;
 import net.minecraft.scoreboard.ScoreboardObjective;
 import net.minecraft.scoreboard.ScoreboardPlayerScore;
+import net.minecraft.server.MinecraftServer;
 
 /**
  * Class created for
@@ -12,9 +15,11 @@ import net.minecraft.scoreboard.ScoreboardPlayerScore;
 public class ScoreboardDelta {
 
     public static void update() {
+        MinecraftServer server = CarpetServer.getMinecraftServer();
         for(int i = 0; i < 2; i++) {
-            ScoreboardObjective objective = CarpetServer.minecraft_server.getWorldById(0).getScoreboard().getObjectiveForSlot(i);
-            Collection<ScoreboardPlayerScore> list = CarpetServer.minecraft_server.getWorldById(0).getScoreboard().getAllPlayerScores(objective);
+            Scoreboard scoreboard = server.getWorldById(0).getScoreboard();
+            ScoreboardObjective objective = scoreboard.getObjectiveForSlot(i);
+            Collection<ScoreboardPlayerScore> list = scoreboard.getAllPlayerScores(objective);
 
             for(ScoreboardPlayerScore s : list){
                 ((ExtendedScore) s).computeScoreDelta();
@@ -26,10 +31,12 @@ public class ScoreboardDelta {
         }
     }
 
-    public static void resetScoreboardDelta(){
+    public static void resetScoreboardDelta() {
+        MinecraftServer server = CarpetServer.getMinecraftServer();
         for(int i = 0; i < 2; i++) {
-            ScoreboardObjective objective = CarpetServer.minecraft_server.getWorldById(0).getScoreboard().getObjectiveForSlot(i);
-            Collection<ScoreboardPlayerScore> list = CarpetServer.minecraft_server.getWorldById(0).getScoreboard().getAllPlayerScores(objective);
+            Scoreboard scoreboard = server.getWorldById(0).getScoreboard();
+            ScoreboardObjective objective = scoreboard.getObjectiveForSlot(i);
+            Collection<ScoreboardPlayerScore> list = scoreboard.getAllPlayerScores(objective);
 
             for(ScoreboardPlayerScore s : list){
                 ((ExtendedScore) s).computeScoreDelta();

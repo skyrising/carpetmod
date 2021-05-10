@@ -1,6 +1,6 @@
 package carpet.mixin.stackableShulkerBoxes;
 
-import carpet.CarpetServer;
+import carpet.CarpetMod;
 import carpet.mixin.accessors.ItemEntityAccessor;
 import carpet.utils.extensions.ExtendedItemStack;
 import net.minecraft.entity.Entity;
@@ -29,10 +29,10 @@ public abstract class ItemEntityMixin extends Entity {
     @Redirect(method = "onPlayerCollision", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/player/PlayerInventory;insertStack(Lnet/minecraft/item/ItemStack;)Z"))
     private boolean insertStack(PlayerInventory inventory, ItemStack stack) {
         try {
-            CarpetServer.playerInventoryStacking.set(Boolean.TRUE);
+            CarpetMod.playerInventoryStacking.set(Boolean.TRUE);
             return inventory.insertStack(stack);
         } finally {
-            CarpetServer.playerInventoryStacking.set(Boolean.FALSE);
+            CarpetMod.playerInventoryStacking.set(Boolean.FALSE);
         }
     }
 

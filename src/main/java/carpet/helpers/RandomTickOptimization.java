@@ -4,6 +4,7 @@ import carpet.CarpetServer;
 import carpet.mixin.accessors.BlockAccessor;
 import carpet.mixin.accessors.ServerChunkCacheAccessor;
 import net.minecraft.block.*;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.world.ServerChunkCache;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
@@ -50,9 +51,10 @@ public class RandomTickOptimization {
     }
 
     public static void recalculateAllChunks() {
-        if (CarpetServer.minecraft_server.worlds == null) // worlds not loaded yet
+        MinecraftServer server = CarpetServer.getNullableMinecraftServer();
+        if (server == null || server.worlds == null) // worlds not loaded yet
             return;
-        for (World world : CarpetServer.minecraft_server.worlds) {
+        for (World world : server.worlds) {
             ChunkCache provider = world.getChunkManager();
             if (!(provider instanceof ServerChunkCache))
                 continue;

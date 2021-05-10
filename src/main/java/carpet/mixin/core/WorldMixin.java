@@ -2,6 +2,7 @@ package carpet.mixin.core;
 
 import carpet.helpers.TickSpeed;
 import carpet.utils.extensions.ExtendedWorld;
+import net.minecraft.client.world.ClientWorld;
 import net.minecraft.entity.Entity;
 import net.minecraft.util.Tickable;
 import net.minecraft.world.World;
@@ -19,16 +20,17 @@ import java.util.concurrent.atomic.AtomicLong;
 public class WorldMixin implements ExtendedWorld {
     @Shadow @Final public Random random;
 
+    @Shadow @Final public boolean isClient;
     private AtomicLong seed;
 
     @Redirect(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/Tickable;tick()V"))
     private void dontProcessTileEntities(Tickable tickable) {
-        if (TickSpeed.process_entities) tickable.tick();
+        if (this.isClient || TickSpeed.process_entities) tickable.tick();
     }
 
     @Redirect(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;method_26130(Lnet/minecraft/entity/Entity;)V"))
     private void dontProcessEntities(World world, Entity entity) {
-        if (TickSpeed.process_entities) world.method_26130(entity);
+        if (this.isClient || TickSpeed.process_entities) world.method_26130(entity);
     }
 
     @Override
