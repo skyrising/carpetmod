@@ -27,5 +27,6 @@ public class WorldMixin {
     @Redirect(method = "tickBlockEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;remove(Lnet/minecraft/entity/Entity;)V"))
     private void logOnRemoveEntity(Chunk chunk, Entity entity) {
         CarpetClientChunkLogger.setReason(() -> "Removing entity from chunk: " + entity.getName());
+        chunk.remove(entity);
     }
 }
