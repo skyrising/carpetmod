@@ -15,7 +15,7 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class CloneCommandMixin {
     @ModifyConstant(method = "method_29272", constant = {@Constant(intValue = 2), @Constant(intValue = 3)})
     private int changeFlags(int flags) {
-        return flags | (CarpetSettings.fillUpdates ? 0 : 128);
+        return flags | (CarpetSettings.fillUpdates ? 0 : 1024);
     }
 
     @Redirect(method = "method_29272", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/World;method_26017(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/Block;Z)V"))

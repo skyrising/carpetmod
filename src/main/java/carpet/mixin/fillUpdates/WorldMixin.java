@@ -15,11 +15,11 @@ import org.spongepowered.asm.mixin.injection.Redirect;
 public class WorldMixin {
     @Redirect(method = "setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/chunk/Chunk;method_27373(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;)Lnet/minecraft/block/BlockState;"))
     private BlockState setBlockStateCarpet(Chunk chunk, BlockPos pos, BlockState state, BlockPos posAgain, BlockState newStateAgain, int flags) {
-        return ((ExtendedWorldChunk) chunk).setBlockStateCarpet(pos, state, (flags & 128) != 0);
+        return ((ExtendedWorldChunk) chunk).setBlockStateCarpet(pos, state, (flags & 1024) != 0);
     }
 
     @ModifyConstant(method = "setBlockState(Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/block/BlockState;I)Z", constant = @Constant(intValue = 16))
     private int checkNoUpdateFlag(int flags) {
-        return flags | 128;
+        return flags | 1024;
     }
 }
