@@ -426,7 +426,39 @@
  
          this.field_72984_F.func_76319_b();
          this.field_72984_F.func_76319_b();
-@@ -1648,7 +1821,8 @@
+@@ -1596,20 +1769,21 @@
+         p_72866_1_.field_70126_B = p_72866_1_.field_70177_z;
+         p_72866_1_.field_70127_C = p_72866_1_.field_70125_A;
+ 
+-        if (p_72866_2_ && p_72866_1_.field_70175_ag)
+-        {
+-            ++p_72866_1_.field_70173_aa;
++        World world = p_72866_1_.func_130014_f_();
++        Chunk chunk = world.func_72964_e(p_72866_1_.func_180425_c().func_177958_n() >> 4,p_72866_1_.func_180425_c().func_177952_p() >> 4);
++        if(!LazyChunkBehaviorHelper.containsLazyChunk(chunk)) {
++            if (p_72866_2_ && p_72866_1_.field_70175_ag) {
++                ++p_72866_1_.field_70173_aa;
+ 
+-            if (p_72866_1_.func_184218_aH())
+-            {
+-                p_72866_1_.func_70098_U();
++                if (p_72866_1_.func_184218_aH()) {
++                    p_72866_1_.func_70098_U();
++                } else {
++                    p_72866_1_.func_70071_h_();
++                }
+             }
+-            else
+-            {
+-                p_72866_1_.func_70071_h_();
+-            }
+         }
+ 
++
+         this.field_72984_F.func_76320_a("chunkCheck");
+ 
+         if (Double.isNaN(p_72866_1_.field_70165_t) || Double.isInfinite(p_72866_1_.field_70165_t))
+@@ -1648,7 +1822,8 @@
                  this.func_72964_e(p_72866_1_.field_70176_ah, p_72866_1_.field_70164_aj).func_76608_a(p_72866_1_, p_72866_1_.field_70162_ai);
              }
  
@@ -436,7 +468,7 @@
              {
                  p_72866_1_.field_70175_ag = false;
              }
-@@ -1670,7 +1844,11 @@
+@@ -1670,7 +1845,11 @@
                  }
                  else
                  {
@@ -449,7 +481,7 @@
                  }
              }
          }
-@@ -1689,7 +1867,7 @@
+@@ -1689,7 +1868,7 @@
          {
              Entity entity4 = list.get(j2);
  
@@ -458,7 +490,7 @@
              {
                  return false;
              }
-@@ -2153,6 +2331,16 @@
+@@ -2153,6 +2332,16 @@
                          {
                              this.field_72986_A.func_76090_f(this.field_73012_v.nextInt(168000) + 12000);
                          }
@@ -475,7 +507,7 @@
                      }
                      else
                      {
-@@ -2177,6 +2365,16 @@
+@@ -2177,6 +2366,16 @@
                          {
                              this.field_72986_A.func_76080_g(this.field_73012_v.nextInt(168000) + 12000);
                          }
@@ -492,7 +524,7 @@
                      }
                      else
                      {
-@@ -2387,6 +2585,11 @@
+@@ -2387,6 +2586,11 @@
  
      public boolean func_180500_c(EnumSkyBlock p_180500_1_, BlockPos p_180500_2_)
      {
@@ -504,7 +536,7 @@
          if (!this.func_175648_a(p_180500_2_, 17, false))
          {
              return false;
-@@ -2699,7 +2902,8 @@
+@@ -2699,7 +2903,8 @@
          IBlockState iblockstate1 = this.func_180495_p(p_190527_2_);
          AxisAlignedBB axisalignedbb = p_190527_3_ ? null : p_190527_1_.func_176223_P().func_185890_d(this, p_190527_2_);
  
@@ -514,7 +546,7 @@
          {
              return false;
          }
-@@ -3267,30 +3471,41 @@
+@@ -3267,30 +3472,41 @@
  
      public void func_175666_e(BlockPos p_175666_1_, Block p_175666_2_)
      {
@@ -571,7 +603,7 @@
      }
  
      public DifficultyInstance func_175649_E(BlockPos p_175649_1_)
-@@ -3361,4 +3576,128 @@
+@@ -3361,4 +3577,128 @@
      {
          return null;
      }
