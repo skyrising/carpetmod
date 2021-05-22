@@ -95,6 +95,11 @@ public class CarpetSettings
     @Rule(desc = "Enables /entityinfo command", category = COMMANDS, extra = {
             "Also enables yellow carpet placement action if 'carpets' rule is turned on as well"
     })
+    public static boolean commandLazyChunkBehavior = true;
+    @Rule(desc = "Enables /lazychunkbehavior command", category = COMMANDS, extra = {
+            "Loads a chunk remotely"
+    })
+    
     public static boolean commandEntityInfo = true;
 
     @Rule(desc = "Enables /unload command to inspect chunk unloading order", category = COMMANDS)
